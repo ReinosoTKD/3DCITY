@@ -426,7 +426,7 @@
 
   <div class="topbar">
     <div class="brand">
-      <strong>quito-ecuador(2).glb</strong>
+      <strong>quito-ecuador.glb</strong>
       <span>Visor 3D</span>
     </div>
 
@@ -483,7 +483,7 @@
       <input id="shadows" type="checkbox" checked>
     </label>
 
-    <div id="modelInfo" class="model-info">edificio.glb</div>
+    <div id="modelInfo" class="model-info">quito-ecuador.glb</div>
   </aside>
 
   <div id="loading">
@@ -518,13 +518,13 @@
   // El repositorio contiene solamente:
   //
   //   index.html
-  //   edificio.glb
+  //   quito-ecuador.glb
   //
   // El GLB contiene la geometría y los materiales exportados desde Blender.
   // No se necesita selector de archivos ni carpeta adicional.
   // ============================================================
 
-  const GLB_FILE = "./quito-ecuador(2).glb";
+  const GLB_FILE = "./quito-ecuador.glb";
 
   // ============================================================
   // ESCENA
@@ -634,7 +634,7 @@
   // ============================================================
 
   async function loadModelAutomatically() {
-    showLoading(true, "Cargando edificio.glb…");
+    showLoading(true, "Cargando quito-ecuador.glb…");
     clearError();
 
     try {
@@ -653,8 +653,8 @@
       setStatus("Error al cargar", false, true);
 
       showError(
-        "No se pudo cargar edificio.glb. Comprueba que esté junto a index.html " +
-        "en la raíz del repositorio y que el nombre sea exactamente edificio.glb."
+        "No se pudo cargar quito-ecuador.glb. Comprueba que esté junto a index.html " +
+        "en la raíz del repositorio y que el nombre sea exactamente quito-ecuador.glb."
       );
     }
   }
@@ -834,7 +834,7 @@
     });
 
     modelInfoEl.innerHTML =
-      `<strong>Archivo:</strong> edificio.glb<br>` +
+      `<strong>Archivo:</strong> quito-ecuador.glb<br>` +
       `<strong>Mallas:</strong> ${meshes.toLocaleString("es")}<br>` +
       `<strong>Vértices:</strong> ${Math.round(vertices).toLocaleString("es")}<br>` +
       `<strong>Triángulos:</strong> ${Math.round(triangles).toLocaleString("es")}<br>` +
@@ -1004,46 +1004,73 @@
     camera.updateProjectionMatrix();
 
     renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   }
 
-  function showLoading(show, text) {
-    if (show) {
-      loadingEl.classList.remove("hidden");
-      if (text) loadingTextEl.textContent = text;
-    } else {
-      loadingEl.classList.add("hidden");
-    }
+  // ============================================================
+  // ESTADO / ERRORES
+  // ============================================================
+
+  function showLoading(show, text = "Cargando modelo 3D…") {
+    loadingTextEl.textContent = text;
+    loadingEl.classList.toggle("hidden", !show);
   }
 
-  function setStatus(text, ok, error) {
+  function setStatus(text, ok = false, error = false) {
     statusEl.textContent = text;
-    statusEl.classList.remove("ok", "error");
-    if (ok) statusEl.classList.add("ok");
-    if (error) statusEl.classList.add("error");
+    statusEl.classList.toggle("ok", ok);
+    statusEl.classList.toggle("error", error);
   }
 
-  function showError(text) {
-    errorBox.textContent = text;
+  function showError(message) {
+    errorBox.textContent = message;
     errorBox.classList.add("show");
   }
 
   function clearError() {
-    errorBox.classList.remove("show");
     errorBox.textContent = "";
+    errorBox.classList.remove("show");
   }
 
-  function disposeObject(obj) {
-    obj.traverse(child => {
-      if (child.isMesh) {
-        if (child.geometry) child.geometry.dispose();
-        if (Array.isArray(child.material)) {
-          child.material.forEach(m => m.dispose?.());
-        } else if (child.material) {
-          child.material.dispose();
+  function escapeHTML(value) {
+    return String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function disposeObject(object) {
+    object.traverse(child => {
+      if (!child.isMesh) return;
+
+      if (child.geometry) child.geometry.dispose();
+
+      const materials = Array.isArray(child.material)
+        ? child.material
+        : [child.material];
+
+      materials.forEach(material => {
+        if (!material) return;
+
+        for (const key in material) {
+          const value = material[key];
+
+          if (value && value.isTexture) {
+            value.dispose();
+          }
         }
-      }
+
+        material.dispose?.();
+      });
     });
   }
+
+  // Evita errores si la página se cierra durante una carga.
+  window.addEventListener("beforeunload", () => {
+    if (animationFrame) cancelAnimationFrame(animationFrame);
+  });
 </script>
 </body>
 </html>
