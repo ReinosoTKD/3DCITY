@@ -426,7 +426,7 @@
 
   <div class="topbar">
     <div class="brand">
-      <strong>edificacion.obj</strong>
+      <strong>edificio.glb</strong>
       <span>Visor 3D</span>
     </div>
 
@@ -446,20 +446,6 @@
       <strong>Ajustes</strong>
       <button id="closeSettingsBtn" aria-label="Cerrar ajustes">×</button>
     </div>
-
-    <div class="section-label">Edificios</div>
-
-    <div class="color-setting">
-      <label for="tower1Color">Torre 1</label>
-      <input id="tower1Color" type="color" value="#d8c3a5" aria-label="Color de la torre 1">
-    </div>
-
-    <div class="color-setting">
-      <label for="tower2Color">Torre 2</label>
-      <input id="tower2Color" type="color" value="#aebfd1" aria-label="Color de la torre 2">
-    </div>
-
-    <button id="resetColorsBtn" class="small-action" type="button">Restaurar colores originales</button>
 
     <div class="section-label">Iluminación</div>
 
@@ -497,7 +483,7 @@
       <input id="shadows" type="checkbox" checked>
     </label>
 
-    <div id="modelInfo" class="model-info">edificacion.obj</div>
+    <div id="modelInfo" class="model-info">edificio.glb</div>
   </aside>
 
   <div id="loading">
@@ -524,7 +510,7 @@
 <script type="module">
   import * as THREE from "three";
   import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-  import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
+  import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
   // ============================================================
   // CONFIGURACIÓN DEL MODELO
@@ -532,21 +518,13 @@
   // El repositorio contiene solamente:
   //
   //   index.html
-  //   edificacion.obj
+  //   edificio.glb
   //
+  // El GLB contiene la geometría y los materiales exportados desde Blender.
   // No se necesita selector de archivos ni carpeta adicional.
   // ============================================================
 
-  // ============================================================
-  // ARCHIVO DEL MODELO
-  // ============================================================
-  // El repositorio contiene únicamente:
-  //
-  //   index.html
-  //   edificacion.obj
-  //
-  // Por eso el OBJ se carga directamente desde la raíz.
-  const OBJ_FILE = "./edificacion.obj";
+  const GLB_FILE = "./edificio.glb";
 
   // ============================================================
   // ESCENA
@@ -568,26 +546,6 @@
 
   const originalMaterials = new Map();
   const materialObjects = [];
-
-  // Los nombres vienen directamente de edificacion.obj.
-  // No se modifica el archivo: solo se aplican colores durante el renderizado.
-  const TOWER_PARTS = {
-    tower1: new Set([
-      "building_3_Cube.016",
-      "Cube.011_Cube.015",
-      "Cube.010_Cube.014",
-      "pegangan.003_Plane.008",
-      "tangga.003_Plane.007"
-    ]),
-    tower2: new Set([
-      "building_4_Cube.009"
-    ])
-  };
-
-  const DEFAULT_TOWER_COLORS = {
-    tower1: "#d8c3a5",
-    tower2: "#aebfd1"
-  };
 
   const clock = new THREE.Clock();
 
@@ -676,14 +634,15 @@
   // ============================================================
 
   async function loadModelAutomatically() {
-    showLoading(true, "Cargando edificacion.obj…");
+    showLoading(true, "Cargando edificio.glb…");
     clearError();
 
     try {
       setStatus("Cargando modelo…");
 
-      const objLoader = new OBJLoader();
-      const object = await loadOBJ(objLoader, OBJ_FILE);
+      const gltfLoader = new GLTFLoader();
+      const gltf = await loadGLB(gltfLoader, GLB_FILE);
+      const object = gltf.scene;
 
       prepareModel(object);
       showLoading(false);
@@ -694,13 +653,13 @@
       setStatus("Error al cargar", false, true);
 
       showError(
-        "No se pudo cargar edificacion.obj. Comprueba que esté junto a index.html " +
-        "en la raíz del repositorio y que el nombre sea exactamente edificacion.obj."
+        "No se pudo cargar edificio.glb. Comprueba que esté junto a index.html " +
+        "en la raíz del repositorio y que el nombre sea exactamente edificio.glb."
       );
     }
   }
 
-  function loadOBJ(loader, url) {
+  function loadGLB(loader, url) {
     return new Promise((resolve, reject) => {
       loader.load(
         url,
@@ -708,8 +667,7 @@
         xhr => {
           if (xhr.total) {
             const percent = Math.round((xhr.loaded / xhr.total) * 100);
-            loadingTextEl.textContent =
-              `Cargando modelo… ${percent}%`;
+            loadingTextEl.textContent = `Cargando modelo… ${percent}%`;
           }
         },
         reject
@@ -735,8 +693,8 @@
       child.castShadow = true;
       child.receiveShadow = true;
 
-      // Clonamos los materiales para que Torre 1 y Torre 2 puedan tener
-      // colores independientes incluso cuando el OBJ reutiliza materiales.
+      // Clonamos los materiales para mantener el modelo independiente
+      // y conservar los materiales importados desde el GLB.
       if (Array.isArray(child.material)) {
         child.material = child.material.map(material => material?.clone?.() ?? material);
       } else if (child.material?.clone) {
@@ -769,22 +727,11 @@
           material.emissiveMap.needsUpdate = true;
         }
 
-        if ("roughness" in material) {
-          material.roughness = Number(document.getElementById("roughness").value);
-        }
-
-        if ("metalness" in material) {
-          material.metalness = Number(document.getElementById("metalness").value);
-        }
-
         material.needsUpdate = true;
       });
     });
 
     scene.add(model);
-
-    // Aplicamos color solo en el visor. edificacion.obj permanece intacto.
-    applyTowerColors();
 
     // Centrar y normalizar tamaño.
     const box = new THREE.Box3().setFromObject(model);
@@ -812,63 +759,6 @@
     fitCameraToModel();
 
     updateModelInfo();
-  }
-
-  function getTowerForNode(node) {
-    let current = node;
-
-    while (current) {
-      if (TOWER_PARTS.tower1.has(current.name)) return "tower1";
-      if (TOWER_PARTS.tower2.has(current.name)) return "tower2";
-      current = current.parent;
-    }
-
-    return null;
-  }
-
-  function applyTowerColors() {
-    if (!model) return;
-
-    const colors = {
-      tower1: document.getElementById("tower1Color")?.value || DEFAULT_TOWER_COLORS.tower1,
-      tower2: document.getElementById("tower2Color")?.value || DEFAULT_TOWER_COLORS.tower2
-    };
-
-    model.traverse(child => {
-      if (!child.isMesh) return;
-
-      const tower = getTowerForNode(child);
-      if (!tower) return;
-
-      const materials = Array.isArray(child.material)
-        ? child.material
-        : [child.material];
-
-      materials.forEach(material => {
-        if (!material?.color) return;
-
-        // Multiplicar el color sobre una textura permite conservar detalles
-        // si algún día se añade el .mtl/texturas sin cambiar esta lógica.
-        material.color.set(colors[tower]);
-        material.needsUpdate = true;
-      });
-    });
-  }
-
-  function restoreOriginalMaterials() {
-    materialObjects.forEach(material => {
-      const original = originalMaterials.get(material.uuid);
-      if (!original) return;
-
-      if (original.color && material.color) material.color.copy(original.color);
-      if (original.roughness !== null && "roughness" in material) material.roughness = original.roughness;
-      if (original.metalness !== null && "metalness" in material) material.metalness = original.metalness;
-      if (original.wireframe !== null && "wireframe" in material) material.wireframe = original.wireframe;
-      material.needsUpdate = true;
-    });
-
-    document.getElementById("tower1Color").value = DEFAULT_TOWER_COLORS.tower1;
-    document.getElementById("tower2Color").value = DEFAULT_TOWER_COLORS.tower2;
   }
 
   function fitCameraToModel() {
@@ -944,7 +834,7 @@
     });
 
     modelInfoEl.innerHTML =
-      `<strong>Archivo:</strong> edificacion.obj<br>` +
+      `<strong>Archivo:</strong> edificio.glb<br>` +
       `<strong>Mallas:</strong> ${meshes.toLocaleString("es")}<br>` +
       `<strong>Vértices:</strong> ${Math.round(vertices).toLocaleString("es")}<br>` +
       `<strong>Triángulos:</strong> ${Math.round(triangles).toLocaleString("es")}<br>` +
@@ -988,14 +878,6 @@
       controls.autoRotateSpeed = 1.4;
       autoRotateBtn.classList.toggle("active", controls.autoRotate);
     });
-
-    // Colores independientes para las dos torres.
-    ["tower1Color", "tower2Color"].forEach(id => {
-      document.getElementById(id).addEventListener("input", applyTowerColors);
-    });
-
-    document.getElementById("resetColorsBtn")
-      .addEventListener("click", restoreOriginalMaterials);
 
     // Ajustes visuales.
     document.getElementById("exposure").addEventListener("input", event => {
@@ -1084,7 +966,6 @@
         if (!child.isMesh || !child.userData.__baseMaterial) return;
         child.material = child.userData.__baseMaterial;
       });
-      applyTowerColors();
     }
   }
 
