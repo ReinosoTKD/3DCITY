@@ -524,7 +524,7 @@
   // No se necesita selector de archivos ni carpeta adicional.
   // ============================================================
 
-  const GLB_FILE = "./edificio.glb";
+  const GLB_FILE = "./quito-ecuador(2).glb";
 
   // ============================================================
   // ESCENA
@@ -1004,73 +1004,46 @@
     camera.updateProjectionMatrix();
 
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   }
 
-  // ============================================================
-  // ESTADO / ERRORES
-  // ============================================================
-
-  function showLoading(show, text = "Cargando modelo 3D…") {
-    loadingTextEl.textContent = text;
-    loadingEl.classList.toggle("hidden", !show);
+  function showLoading(show, text) {
+    if (show) {
+      loadingEl.classList.remove("hidden");
+      if (text) loadingTextEl.textContent = text;
+    } else {
+      loadingEl.classList.add("hidden");
+    }
   }
 
-  function setStatus(text, ok = false, error = false) {
+  function setStatus(text, ok, error) {
     statusEl.textContent = text;
-    statusEl.classList.toggle("ok", ok);
-    statusEl.classList.toggle("error", error);
+    statusEl.classList.remove("ok", "error");
+    if (ok) statusEl.classList.add("ok");
+    if (error) statusEl.classList.add("error");
   }
 
-  function showError(message) {
-    errorBox.textContent = message;
+  function showError(text) {
+    errorBox.textContent = text;
     errorBox.classList.add("show");
   }
 
   function clearError() {
-    errorBox.textContent = "";
     errorBox.classList.remove("show");
+    errorBox.textContent = "";
   }
 
-  function escapeHTML(value) {
-    return String(value)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  function disposeObject(object) {
-    object.traverse(child => {
-      if (!child.isMesh) return;
-
-      if (child.geometry) child.geometry.dispose();
-
-      const materials = Array.isArray(child.material)
-        ? child.material
-        : [child.material];
-
-      materials.forEach(material => {
-        if (!material) return;
-
-        for (const key in material) {
-          const value = material[key];
-
-          if (value && value.isTexture) {
-            value.dispose();
-          }
+  function disposeObject(obj) {
+    obj.traverse(child => {
+      if (child.isMesh) {
+        if (child.geometry) child.geometry.dispose();
+        if (Array.isArray(child.material)) {
+          child.material.forEach(m => m.dispose?.());
+        } else if (child.material) {
+          child.material.dispose();
         }
-
-        material.dispose?.();
-      });
+      }
     });
   }
-
-  // Evita errores si la página se cierra durante una carga.
-  window.addEventListener("beforeunload", () => {
-    if (animationFrame) cancelAnimationFrame(animationFrame);
-  });
 </script>
 </body>
 </html>
