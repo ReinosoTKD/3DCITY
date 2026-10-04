@@ -57,175 +57,202 @@
     .topbar {
       position: absolute;
       z-index: 20;
-      top: 16px;
-      left: 16px;
-      right: 16px;
+      top: max(12px, env(safe-area-inset-top));
+      left: 12px;
+      right: 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 14px;
+      gap: 10px;
       pointer-events: none;
     }
 
-    .brand, .status {
-      pointer-events: auto;
-      background: var(--panel);
-      border: 1px solid var(--border);
+    .brand,
+    .status,
+    .mobile-controls,
+    .settings-panel {
+      background: rgba(10, 14, 22, .72);
+      border: 1px solid rgba(255,255,255,.08);
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
-      border-radius: 14px;
-      box-shadow: 0 12px 40px rgba(0,0,0,.25);
+      box-shadow: 0 10px 35px rgba(0,0,0,.22);
     }
 
     .brand {
-      padding: 11px 15px;
+      pointer-events: auto;
+      padding: 8px 11px;
+      border-radius: 12px;
     }
 
     .brand strong {
       display: block;
-      font-size: 14px;
-      letter-spacing: .2px;
+      font-size: 12px;
+      font-weight: 650;
+      letter-spacing: .1px;
     }
 
     .brand span {
       display: block;
-      color: var(--muted);
-      font-size: 11px;
-      margin-top: 2px;
+      color: #8995a8;
+      font-size: 9px;
+      margin-top: 1px;
     }
 
     .status {
-      padding: 9px 12px;
-      color: var(--muted);
-      font-size: 12px;
-      max-width: 48vw;
+      padding: 7px 9px;
+      border-radius: 10px;
+      color: #9ba7b8;
+      font-size: 10px;
+      max-width: 45vw;
       text-align: right;
+      pointer-events: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .status.ok { color: var(--success); }
-    .status.error { color: var(--danger); }
+    .status.ok { color: #65dda3; }
+    .status.error { color: #ff7777; }
 
-    .sidepanel {
+    .mobile-controls {
       position: absolute;
       z-index: 20;
-      top: 82px;
-      right: 16px;
-      width: min(310px, calc(100vw - 32px));
-      max-height: calc(100vh - 105px);
-      overflow: auto;
-      padding: 14px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      box-shadow: 0 18px 60px rgba(0,0,0,.35);
-    }
-
-    .section {
-      padding: 10px 0 13px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .section:last-child { border-bottom: 0; }
-
-    .section-title {
-      font-size: 11px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: .11em;
-      margin-bottom: 9px;
-      font-weight: 700;
-    }
-
-    .row {
+      left: 50%;
+      bottom: max(14px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 9px;
-      margin: 8px 0;
+      gap: 5px;
+      padding: 5px;
+      border-radius: 15px;
     }
 
-    .row label {
-      font-size: 12px;
-      color: #d9deea;
+    .mobile-controls button {
+      width: 39px;
+      height: 39px;
+      padding: 0;
+      border: 0;
+      border-radius: 11px;
+      color: #eef3fb;
+      background: transparent;
+      font-size: 18px;
+      display: grid;
+      place-items: center;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    input[type="range"] {
-      width: 125px;
-      accent-color: var(--accent);
+    .mobile-controls button:active {
+      background: rgba(255,255,255,.13);
+      transform: scale(.94);
     }
 
-    select, button {
-      border: 1px solid var(--border);
-      color: var(--text);
-      background: rgba(255,255,255,.06);
-      border-radius: 9px;
-      font: inherit;
+    .mobile-controls button.active {
+      color: #7db2ff;
+      background: rgba(110,168,255,.13);
     }
 
-    select {
-      padding: 7px 8px;
-      width: 135px;
-      outline: none;
-    }
-
-    button {
-      padding: 8px 10px;
-      cursor: pointer;
+    .settings-panel {
+      position: absolute;
+      z-index: 25;
+      right: 12px;
+      bottom: calc(70px + env(safe-area-inset-bottom));
+      width: min(285px, calc(100vw - 24px));
+      padding: 13px;
+      border-radius: 15px;
+      transform: translateY(10px) scale(.97);
+      opacity: 0;
+      visibility: hidden;
       transition: .18s ease;
     }
 
-    button:hover {
-      background: rgba(255,255,255,.12);
-      border-color: rgba(110,168,255,.4);
-      transform: translateY(-1px);
+    .settings-panel.open {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+      visibility: visible;
     }
 
-    button:active { transform: translateY(0); }
-
-    .buttons {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 7px;
-    }
-
-    .buttons button.full { grid-column: 1 / -1; }
-
-    .switch {
+    .settings-head {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      margin-bottom: 13px;
+      font-size: 13px;
     }
 
-    .switch input {
-      width: 17px;
-      height: 17px;
-      accent-color: var(--accent);
+    .settings-head button {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border: 0;
+      border-radius: 8px;
+      background: rgba(255,255,255,.06);
+      color: #dce4f0;
+      font-size: 19px;
+    }
+
+    .setting {
+      display: grid;
+      grid-template-columns: 1fr 125px;
+      align-items: center;
+      gap: 12px;
+      margin: 11px 0;
+    }
+
+    .setting label,
+    .toggle {
+      color: #cbd3df;
+      font-size: 11px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: #75aaff;
+    }
+
+    select {
+      width: 100%;
+      padding: 7px 8px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 8px;
+      outline: none;
+      color: #e9eef6;
+      background: rgba(255,255,255,.06);
+      font: inherit;
+      font-size: 11px;
+    }
+
+    .toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-top: 1px solid rgba(255,255,255,.06);
+    }
+
+    .toggle input {
+      width: 16px;
+      height: 16px;
+      accent-color: #75aaff;
     }
 
     .model-info {
-      color: var(--muted);
-      font-size: 11px;
-      line-height: 1.55;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,.06);
+      color: #7f8b9e;
+      font-size: 9px;
+      line-height: 1.5;
     }
 
     .hint {
       position: absolute;
       z-index: 10;
       left: 50%;
-      bottom: 18px;
+      bottom: 76px;
       transform: translateX(-50%);
-      color: rgba(255,255,255,.72);
-      font-size: 11px;
-      background: rgba(0,0,0,.28);
-      border: 1px solid rgba(255,255,255,.07);
-      border-radius: 999px;
-      padding: 7px 12px;
+      color: rgba(255,255,255,.42);
+      font-size: 9px;
       pointer-events: none;
       white-space: nowrap;
-      backdrop-filter: blur(10px);
     }
 
     #loading {
@@ -236,66 +263,112 @@
       align-items: center;
       justify-content: center;
       flex-direction: column;
-      gap: 12px;
-      background: rgba(4,7,12,.42);
-      backdrop-filter: blur(4px);
+      gap: 10px;
+      background: rgba(4,7,12,.28);
+      backdrop-filter: blur(3px);
     }
 
     #loading.hidden { display: none; }
 
     .spinner {
-      width: 34px;
-      height: 34px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
-      border: 3px solid rgba(255,255,255,.14);
-      border-top-color: var(--accent);
+      border: 2px solid rgba(255,255,255,.12);
+      border-top-color: #75aaff;
       animation: spin .8s linear infinite;
     }
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
     .loading-text {
-      color: #dfe6f2;
-      font-size: 13px;
+      color: #cdd6e4;
+      font-size: 11px;
     }
 
     #errorBox {
       position: absolute;
       z-index: 40;
-      left: 16px;
-      bottom: 58px;
-      width: min(520px, calc(100vw - 32px));
+      left: 12px;
+      right: 12px;
+      bottom: 70px;
       display: none;
-      padding: 12px 14px;
-      border: 1px solid rgba(255,107,107,.3);
-      border-radius: 12px;
-      background: rgba(50,12,18,.88);
-      color: #ffd4d4;
-      font-size: 12px;
-      line-height: 1.5;
+      padding: 10px 12px;
+      border: 1px solid rgba(255,107,107,.25);
+      border-radius: 10px;
+      background: rgba(45,10,15,.88);
+      color: #ffd0d0;
+      font-size: 10px;
+      line-height: 1.45;
       backdrop-filter: blur(14px);
     }
 
     #errorBox.show { display: block; }
 
-    @media (max-width: 760px) {
-      .topbar { top: 10px; left: 10px; right: 10px; }
-      .sidepanel {
-        top: auto;
-        left: 10px;
-        right: 10px;
-        bottom: 10px;
-        width: auto;
-        max-height: 42vh;
+    @media (min-width: 761px) {
+      .mobile-controls {
+        left: auto;
+        right: 16px;
+        bottom: 16px;
+        transform: none;
       }
-      .hint { display: none; }
-      .status { max-width: 55vw; }
+
+      .settings-panel {
+        right: 16px;
+        bottom: 74px;
+      }
+
+      .hint {
+        bottom: 25px;
+      }
     }
 
     @media (max-width: 480px) {
-      .brand span { display: none; }
-      .sidepanel { max-height: 47vh; }
-      .row input[type="range"] { width: 105px; }
+      html, body {
+        background: #080c14;
+      }
+
+      .topbar {
+        top: max(8px, env(safe-area-inset-top));
+        left: 8px;
+        right: 8px;
+      }
+
+      .brand {
+        padding: 7px 9px;
+      }
+
+      .brand strong {
+        font-size: 11px;
+      }
+
+      .brand span {
+        display: none;
+      }
+
+      .status {
+        font-size: 9px;
+        padding: 6px 8px;
+      }
+
+      .mobile-controls {
+        bottom: max(9px, env(safe-area-inset-bottom));
+      }
+
+      .mobile-controls button {
+        width: 37px;
+        height: 37px;
+      }
+
+      .settings-panel {
+        right: 8px;
+        width: calc(100vw - 16px);
+        bottom: calc(63px + env(safe-area-inset-bottom));
+      }
+
+      .hint {
+        display: none;
+      }
     }
   </style>
 </head>
@@ -306,80 +379,62 @@
 
   <div class="topbar">
     <div class="brand">
-      <strong>Visor 3D</strong>
-      <span>OBJ + MTL + texturas · GitHub Pages</span>
+      <strong>building.obj</strong>
+      <span>Visor 3D</span>
     </div>
-    <div id="status" class="status">Iniciando visor…</div>
+
+    <div id="status" class="status">Cargando…</div>
   </div>
 
-  <aside class="sidepanel">
-    <div class="section">
-      <div class="section-title">Modelo</div>
-      <div id="modelInfo" class="model-info">
-        Esperando el modelo…
-      </div>
+  <div class="mobile-controls">
+    <button id="resetBtn" aria-label="Reiniciar vista" title="Reiniciar">↺</button>
+    <button id="fitBtn" aria-label="Encajar modelo" title="Encajar">⌖</button>
+    <button id="autoRotateBtn" aria-label="Rotación automática" title="Rotación automática">◌</button>
+    <button id="fullscreenBtn" aria-label="Pantalla completa" title="Pantalla completa">⛶</button>
+    <button id="settingsBtn" aria-label="Ajustes" title="Ajustes">⚙</button>
+  </div>
+
+  <aside id="settingsPanel" class="settings-panel" aria-hidden="true">
+    <div class="settings-head">
+      <strong>Ajustes</strong>
+      <button id="closeSettingsBtn" aria-label="Cerrar ajustes">×</button>
     </div>
 
-    <div class="section">
-      <div class="section-title">Vista</div>
-
-      <div class="row">
-        <label for="materialMode">Material</label>
-        <select id="materialMode">
-          <option value="original">Original</option>
-          <option value="matcap">Iluminación suave</option>
-          <option value="normal">Normales</option>
-        </select>
-      </div>
-
-      <div class="row">
-        <label for="exposure">Exposición</label>
-        <input id="exposure" type="range" min="0.5" max="2" step="0.01" value="1">
-      </div>
-
-      <div class="row">
-        <label for="roughness">Rugosidad</label>
-        <input id="roughness" type="range" min="0" max="1" step="0.01" value="0.5">
-      </div>
-
-      <div class="row">
-        <label for="metalness">Metal</label>
-        <input id="metalness" type="range" min="0" max="1" step="0.01" value="0">
-      </div>
+    <div class="setting">
+      <label for="exposure">Exposición</label>
+      <input id="exposure" type="range" min="0.5" max="2" step="0.01" value="1">
     </div>
 
-    <div class="section">
-      <div class="section-title">Escena</div>
-
-      <div class="row switch">
-        <label for="grid">Cuadrícula</label>
-        <input id="grid" type="checkbox" checked>
-      </div>
-
-      <div class="row switch">
-        <label for="wireframe">Wireframe</label>
-        <input id="wireframe" type="checkbox">
-      </div>
-
-      <div class="row switch">
-        <label for="autoRotate">Rotación automática</label>
-        <input id="autoRotate" type="checkbox">
-      </div>
-
-      <div class="row switch">
-        <label for="shadows">Sombras</label>
-        <input id="shadows" type="checkbox" checked>
-      </div>
+    <div class="setting">
+      <label for="roughness">Rugosidad</label>
+      <input id="roughness" type="range" min="0" max="1" step="0.01" value="0.5">
     </div>
 
-    <div class="section">
-      <div class="section-title">Acciones</div>
-      <div class="buttons">
-        <button id="resetBtn">↺ Reiniciar</button>
-        <button id="fullscreenBtn">⛶ Pantalla completa</button>
-        <button id="fitBtn" class="full">⌖ Encajar modelo</button>
-      </div>
+    <div class="setting">
+      <label for="metalness">Metal</label>
+      <input id="metalness" type="range" min="0" max="1" step="0.01" value="0">
     </div>
+
+    <div class="setting">
+      <label for="materialMode">Material</label>
+      <select id="materialMode">
+        <option value="original">Original</option>
+        <option value="matcap">Iluminación suave</option>
+        <option value="normal">Normales</option>
+      </select>
+    </div>
+
+    <label class="toggle">
+      <span>Wireframe</span>
+      <input id="wireframe" type="checkbox">
+    </label>
+
+    <label class="toggle">
+      <span>Sombras</span>
+      <input id="shadows" type="checkbox" checked>
+    </label>
+
+    <div id="modelInfo" class="model-info">building.obj</div>
   </aside>
 
   <div id="loading">
@@ -407,7 +462,6 @@
   import * as THREE from "three";
   import { OrbitControls } from "three/addons/controls/OrbitControls.js";
   import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-  import { MTLLoader } from "three/addons/loaders/MTLLoader.js";
 
   // ============================================================
   // CONFIGURACIÓN DEL MODELO
@@ -447,7 +501,6 @@
   let renderer;
   let controls;
   let model = null;
-  let gridHelper = null;
   let animationFrame = null;
 
   const originalMaterials = new Map();
@@ -499,7 +552,6 @@
     controls.target.set(0, 0, 0);
 
     createLights();
-    createGrid();
     setupUI();
 
     window.addEventListener("resize", onResize);
@@ -535,48 +587,32 @@
     scene.add(rim);
   }
 
-  function createGrid() {
-    gridHelper = new THREE.GridHelper(
-      20,
-      20,
-      0x4c5b73,
-      0x273143
-    );
-
-    gridHelper.material.transparent = true;
-    gridHelper.material.opacity = 0.42;
-    scene.add(gridHelper);
-  }
 
   // ============================================================
   // CARGA AUTOMÁTICA
   // ============================================================
 
   async function loadModelAutomatically() {
-    showLoading(true, "Cargando archivos del modelo…");
+    showLoading(true, "Cargando building.obj…");
     clearError();
 
-
     try {
-      setStatus("Cargando geometría OBJ…");
+      setStatus("Cargando modelo…");
 
       const objLoader = new OBJLoader();
       const object = await loadOBJ(objLoader, OBJ_FILE);
 
       prepareModel(object);
       showLoading(false);
-
-      setStatus("Modelo cargado correctamente", true);
+      setStatus("Listo", true);
     } catch (error) {
       console.error(error);
-
       showLoading(false);
-      setStatus("No se pudo cargar building.obj", false, true);
+      setStatus("Error al cargar", false, true);
 
       showError(
-        "No se pudo cargar ./building.obj. " +
-        "Comprueba que el archivo esté en la raíz del repositorio " +
-        "junto a index.html y que el nombre sea exactamente building.obj."
+        "No se pudo cargar building.obj. Comprueba que esté junto a index.html " +
+        "en la raíz del repositorio y que el nombre sea exactamente building.obj."
       );
     }
   }
@@ -682,13 +718,6 @@
     // Colocar el modelo apoyado aproximadamente sobre Y=0.
     model.position.y -= finalBox.min.y;
 
-    // La cuadrícula queda debajo.
-    if (gridHelper) {
-      gridHelper.position.y = 0;
-      gridHelper.scale.setScalar(
-        Math.max(finalSize.x, finalSize.z, 4) / 10
-      );
-    }
 
     fitCameraToModel();
 
@@ -789,148 +818,31 @@
     document.getElementById("fullscreenBtn")
       .addEventListener("click", toggleFullscreen);
 
-    document.getElementById("grid")
-      .addEventListener("change", e => {
-        gridHelper.visible = e.target.checked;
-      });
+    const settingsPanel = document.getElementById("settingsPanel");
+    const settingsBtn = document.getElementById("settingsBtn");
+    const closeSettingsBtn = document.getElementById("closeSettingsBtn");
 
-    document.getElementById("autoRotate")
-      .addEventListener("change", e => {
-        controls.autoRotate = e.target.checked;
-        controls.autoRotateSpeed = 1.4;
-      });
-
-    document.getElementById("shadows")
-      .addEventListener("change", e => {
-        renderer.shadowMap.enabled = e.target.checked;
-        if (model) {
-          model.traverse(child => {
-            if (child.isMesh) child.castShadow = e.target.checked;
-          });
-        }
-      });
-
-    document.getElementById("wireframe")
-      .addEventListener("change", e => {
-        if (!model) return;
-
-        model.traverse(child => {
-          if (!child.isMesh) return;
-
-          const mats = Array.isArray(child.material)
-            ? child.material
-            : [child.material];
-
-          mats.forEach(m => {
-            if (m) m.wireframe = e.target.checked;
-          });
-        });
-      });
-
-    document.getElementById("exposure")
-      .addEventListener("input", e => {
-        renderer.toneMappingExposure = Number(e.target.value);
-      });
-
-    document.getElementById("roughness")
-      .addEventListener("input", e => {
-        if (!model) return;
-
-        const value = Number(e.target.value);
-
-        model.traverse(child => {
-          if (!child.isMesh) return;
-
-          const mats = Array.isArray(child.material)
-            ? child.material
-            : [child.material];
-
-          mats.forEach(m => {
-            if (m && "roughness" in m) {
-              m.roughness = value;
-              m.needsUpdate = true;
-            }
-          });
-        });
-      });
-
-    document.getElementById("metalness")
-      .addEventListener("input", e => {
-        if (!model) return;
-
-        const value = Number(e.target.value);
-
-        model.traverse(child => {
-          if (!child.isMesh) return;
-
-          const mats = Array.isArray(child.material)
-            ? child.material
-            : [child.material];
-
-          mats.forEach(m => {
-            if (m && "metalness" in m) {
-              m.metalness = value;
-              m.needsUpdate = true;
-            }
-          });
-        });
-      });
-
-    document.getElementById("materialMode")
-      .addEventListener("change", e => {
-        setMaterialMode(e.target.value);
-      });
-  }
-
-  function setMaterialMode(mode) {
-    if (!model) return;
-
-    model.traverse(child => {
-      if (!child.isMesh) return;
-
-      if (mode === "original") {
-        const original = child.userData.originalMaterial;
-
-        if (original) {
-          child.material = original;
-        }
-
-        child.material.needsUpdate = true;
-        return;
-      }
-
-      if (!child.userData.originalMaterial) {
-        child.userData.originalMaterial = child.material;
-      }
-
-      if (mode === "normal") {
-        const count = Array.isArray(child.material)
-          ? child.material.length
-          : 1;
-
-        if (count === 1) {
-          child.material = new THREE.MeshNormalMaterial({
-            flatShading: false
-          });
-        }
-
-        return;
-      }
-
-      if (mode === "matcap") {
-        const count = Array.isArray(child.material)
-          ? child.material.length
-          : 1;
-
-        if (count === 1) {
-          child.material = new THREE.MeshStandardMaterial({
-            color: 0xd8dee9,
-            roughness: 0.55,
-            metalness: 0.05
-          });
-        }
-      }
+    settingsBtn.addEventListener("click", () => {
+      const open = settingsPanel.classList.toggle("open");
+      settingsPanel.setAttribute("aria-hidden", String(!open));
+      settingsBtn.classList.toggle("active", open);
     });
+
+    closeSettingsBtn.addEventListener("click", () => {
+      settingsPanel.classList.remove("open");
+      settingsPanel.setAttribute("aria-hidden", "true");
+      settingsBtn.classList.remove("active");
+    });
+
+    const autoRotateBtn = document.getElementById("autoRotateBtn");
+
+    autoRotateBtn.addEventListener("click", () => {
+      controls.autoRotate = !controls.autoRotate;
+      controls.autoRotateSpeed = 1.4;
+      autoRotateBtn.classList.toggle("active", controls.autoRotate);
+    });
+
+
   }
 
   function toggleFullscreen() {
