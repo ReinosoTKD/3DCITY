@@ -426,7 +426,7 @@
 
   <div class="topbar">
     <div class="brand">
-      <strong>edificio.glb</strong>
+      <strong>quito-ecuador(2).glb</strong>
       <span>Visor 3D</span>
     </div>
 
@@ -483,7 +483,7 @@
       <input id="shadows" type="checkbox" checked>
     </label>
 
-    <div id="modelInfo" class="model-info">edificio.glb</div>
+    <div id="modelInfo" class="model-info">quito-ecuador(2).glb</div>
   </aside>
 
   <div id="loading">
@@ -518,13 +518,13 @@
   // El repositorio contiene solamente:
   //
   //   index.html
-  //   edificio.glb
+  //   quito-ecuador(2).glb
   //
   // El GLB contiene la geometría y los materiales exportados desde Blender.
   // No se necesita selector de archivos ni carpeta adicional.
   // ============================================================
 
-  const GLB_FILE = "./edificio.glb";
+  const GLB_FILE = "./quito-ecuador(2).glb";
 
   // ============================================================
   // ESCENA
@@ -634,7 +634,7 @@
   // ============================================================
 
   async function loadModelAutomatically() {
-    showLoading(true, "Cargando edificio.glb…");
+    showLoading(true, "Cargando quito-ecuador(2).glb…");
     clearError();
 
     try {
@@ -653,8 +653,8 @@
       setStatus("Error al cargar", false, true);
 
       showError(
-        "No se pudo cargar edificio.glb. Comprueba que esté junto a index.html " +
-        "en la raíz del repositorio y que el nombre sea exactamente edificio.glb."
+        "No se pudo cargar quito-ecuador(2).glb. Comprueba que esté junto a index.html " +
+        "en la raíz del repositorio y que el nombre sea exactamente quito-ecuador(2).glb."
       );
     }
   }
@@ -834,7 +834,7 @@
     });
 
     modelInfoEl.innerHTML =
-      `<strong>Archivo:</strong> edificio.glb<br>` +
+      `<strong>Archivo:</strong> quito-ecuador(2).glb<br>` +
       `<strong>Mallas:</strong> ${meshes.toLocaleString("es")}<br>` +
       `<strong>Vértices:</strong> ${Math.round(vertices).toLocaleString("es")}<br>` +
       `<strong>Triángulos:</strong> ${Math.round(triangles).toLocaleString("es")}<br>` +
