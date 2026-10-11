@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -333,12 +332,12 @@
       <input id="shadows" type="checkbox" checked>
     </label>
 
-    <div id="modelInfo">Modelo: edificio.glb</div>
+    <div id="modelInfo">Cargando información del modelo…</div>
   </aside>
 
   <div id="loading">
     <div class="spinner"></div>
-    <div id="loadingText">Cargando edificio.glb…</div>
+    <div id="loadingText">Cargando modelo 3D…</div>
   </div>
 
   <div id="errorBox"></div>
@@ -357,13 +356,19 @@
   import * as THREE from "three";
   import { OrbitControls } from "three/addons/controls/OrbitControls.js";
   import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+  import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
+  import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 
   // ==================================================
   // CONFIGURACIÓN
-  // Este visor carga únicamente edificio.glb.
-  // Debe estar en la misma carpeta que index.html.
+  // Prioridad de carga:
+  // 1. quito-ecuador(2).glb
+  // 2. edificio.glb (alternativa)
   // ==================================================
-  const GLB_FILE = "./edificio.glb";
+  const MODEL_CANDIDATES = [
+    { name: "quito-ecuador(2).glb", url: "./quito-ecuador(2).glb" },
+    { name: "edificio.glb", url: "./edificio.glb" }
+  ];
 
   const container = document.getElementById("viewer");
   const statusEl = document.getElementById("status");
@@ -375,6 +380,7 @@
 
   let scene, camera, renderer, controls;
   let model = null;
+  let activeModelName = "";
   let baseMaterials = new Map();
   let materials = [];
   let autoRotate = false;
@@ -390,7 +396,7 @@
       45,
       container.clientWidth / container.clientHeight,
       0.001,
-      100000
+      1000000
     );
 
     camera.position.set(3, 2.5, 5);
@@ -439,46 +445,73 @@
   }
 
   async function loadModel() {
-    showLoading(true, "Cargando edificio.glb…");
     errorBox.classList.remove("show");
-    setStatus("Cargando modelo…");
 
-    try {
-      const loader = new GLTFLoader();
-      const gltf = await new Promise((resolve, reject) => {
-        loader.load(
-          GLB_FILE,
-          resolve,
-          xhr => {
-            if (xhr.total) {
-              const percent = Math.round(xhr.loaded / xhr.total * 100);
-              loadingTextEl.textContent = `Cargando modelo… ${percent}%`;
-            }
-          },
-          reject
-        );
-      });
-
-      model = gltf.scene;
-      prepareModel(model);
-      scene.add(model);
-
-      showLoading(false);
-      setStatus("Modelo cargado", true);
-    } catch (error) {
-      console.error("Error cargando edificio.glb:", error);
-      showLoading(false);
-      setStatus("No se pudo cargar el modelo", false, true);
-
-      errorBox.textContent =
-        "No se encontró o no se pudo cargar edificio.glb. " +
-        "Comprueba que el archivo esté junto a index.html y que su nombre " +
-        "sea exactamente edificio.glb.";
-      errorBox.classList.add("show");
+    const loader = new GLTFLoader();
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath("https://www.gstatic.com/draco/versioned/decoders/1.5.7/");
+    loader.setDRACOLoader(dracoLoader);
+    if (typeof MeshoptDecoder !== "undefined") {
+      loader.setMeshoptDecoder(MeshoptDecoder);
     }
+
+    let lastError = null;
+
+    for (const candidate of MODEL_CANDIDATES) {
+      showLoading(true, `Cargando ${candidate.name}…`);
+      setStatus(`Cargando ${candidate.name}…`);
+
+      try {
+        const gltf = await new Promise((resolve, reject) => {
+          loader.load(
+            candidate.url,
+            resolve,
+            xhr => {
+              if (xhr.lengthComputable && xhr.total > 0) {
+                const percent = Math.round((xhr.loaded / xhr.total) * 100);
+                const loadedMB = (xhr.loaded / (1024 * 1024)).toFixed(1);
+                const totalMB = (xhr.total / (1024 * 1024)).toFixed(1);
+                loadingTextEl.textContent = `Cargando ${candidate.name}… ${percent}% (${loadedMB} MB / ${totalMB} MB)`;
+              } else if (xhr.loaded) {
+                const loadedMB = (xhr.loaded / (1024 * 1024)).toFixed(1);
+                loadingTextEl.textContent = `Cargando ${candidate.name}… (${loadedMB} MB descargados)`;
+              }
+            },
+            reject
+          );
+        });
+
+        if (!gltf || !gltf.scene) {
+          throw new Error("El archivo no contiene una escena 3D válida.");
+        }
+
+        model = gltf.scene;
+        activeModelName = candidate.name;
+        prepareModel(model, candidate.name);
+        scene.add(model);
+
+        showLoading(false);
+        setStatus(`Modelo cargado: ${candidate.name}`, true);
+        return;
+      } catch (error) {
+        console.warn(`No se pudo cargar ${candidate.name}:`, error);
+        lastError = error;
+      }
+    }
+
+    showLoading(false);
+    setStatus("No se pudo cargar ningún modelo", false, true);
+
+    errorBox.textContent =
+      "No se pudo cargar el modelo principal (quito-ecuador(2).glb) ni el de respaldo (edificio.glb). " +
+      "Verifica que los archivos existan y tengan un formato GLTF/GLB válido.";
+    errorBox.classList.add("show");
   }
 
-  function prepareModel(object) {
+  function prepareModel(object, fileName) {
+    baseMaterials.clear();
+    materials = [];
+
     object.traverse(child => {
       if (!child.isMesh) return;
 
@@ -513,22 +546,24 @@
       });
     });
 
-    // Centrar el modelo y normalizar su tamaño.
+    // Centrar el modelo y normalizar su tamaño de forma adaptativa.
     const box = new THREE.Box3().setFromObject(object);
-    const center = box.getCenter(new THREE.Vector3());
-    const size = box.getSize(new THREE.Vector3());
-    const maxDimension = Math.max(size.x, size.y, size.z);
+    if (!box.isEmpty()) {
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      const maxDimension = Math.max(size.x, size.y, size.z);
 
-    object.position.sub(center);
+      object.position.sub(center);
 
-    if (maxDimension > 0 && Number.isFinite(maxDimension)) {
-      object.scale.multiplyScalar(4 / maxDimension);
+      if (maxDimension > 0 && Number.isFinite(maxDimension)) {
+        object.scale.multiplyScalar(10 / maxDimension);
+      }
+
+      const finalBox = new THREE.Box3().setFromObject(object);
+      object.position.y -= finalBox.min.y;
     }
 
-    const finalBox = new THREE.Box3().setFromObject(object);
-    object.position.y -= finalBox.min.y;
-
-    updateModelInfo();
+    updateModelInfo(fileName);
     fitCamera();
   }
 
@@ -536,9 +571,11 @@
     if (!model) return;
 
     const box = new THREE.Box3().setFromObject(model);
+    if (box.isEmpty()) return;
+
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
-    const maxSize = Math.max(size.x, size.y, size.z);
+    const maxSize = Math.max(size.x, size.y, size.z) || 10;
 
     const heightDistance =
       maxSize / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)));
@@ -549,11 +586,11 @@
 
     camera.position.copy(center.clone().add(direction.multiplyScalar(distance)));
     controls.target.copy(center);
-    controls.minDistance = Math.max(distance * 0.02, 0.01);
-    controls.maxDistance = Math.max(distance * 20, 10);
+    controls.minDistance = Math.max(distance * 0.001, 0.001);
+    controls.maxDistance = Math.max(distance * 100, 100000);
 
     camera.near = Math.max(distance / 1000, 0.001);
-    camera.far = Math.max(distance * 100, 1000);
+    camera.far = Math.max(distance * 1000, 1000000);
     camera.updateProjectionMatrix();
     controls.update();
   }
@@ -564,7 +601,9 @@
     fitCamera();
   }
 
-  function updateModelInfo() {
+  function updateModelInfo(fileName = activeModelName) {
+    if (!model) return;
+
     let meshCount = 0;
     let vertexCount = 0;
     let triangleCount = 0;
@@ -593,7 +632,7 @@
     });
 
     modelInfoEl.innerHTML =
-      "<strong>Archivo:</strong> edificio.glb<br>" +
+      `<strong>Archivo:</strong> ${fileName}<br>` +
       `<strong>Mallas:</strong> ${meshCount.toLocaleString("es")}<br>` +
       `<strong>Vértices:</strong> ${Math.round(vertexCount).toLocaleString("es")}<br>` +
       `<strong>Triángulos:</strong> ${Math.round(triangleCount).toLocaleString("es")}<br>` +
