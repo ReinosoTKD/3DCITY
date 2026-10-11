@@ -332,12 +332,12 @@
       <input id="shadows" type="checkbox" checked>
     </label>
 
-    <div id="modelInfo">Cargando información del modelo…</div>
+    <div id="modelInfo">Modelo: quito-ecuador(2).glb</div>
   </aside>
 
   <div id="loading">
     <div class="spinner"></div>
-    <div id="loadingText">Cargando modelo 3D…</div>
+    <div id="loadingText">Cargando quito-ecuador(2).glb…</div>
   </div>
 
   <div id="errorBox"></div>
@@ -361,14 +361,10 @@
 
   // ==================================================
   // CONFIGURACIÓN
-  // Prioridad de carga:
-  // 1. quito-ecuador(2).glb
-  // 2. edificio.glb (alternativa)
+  // Este visor carga únicamente quito-ecuador(2).glb.
   // ==================================================
-  const MODEL_CANDIDATES = [
-    { name: "quito-ecuador(2).glb", url: "./quito-ecuador(2).glb" },
-    { name: "edificio.glb", url: "./edificio.glb" }
-  ];
+  const GLB_FILE_NAME = "quito-ecuador(2).glb";
+  const GLB_FILE_URL = "./quito-ecuador(2).glb";
 
   const container = document.getElementById("viewer");
   const statusEl = document.getElementById("status");
@@ -380,7 +376,6 @@
 
   let scene, camera, renderer, controls;
   let model = null;
-  let activeModelName = "";
   let baseMaterials = new Map();
   let materials = [];
   let autoRotate = false;
@@ -445,7 +440,9 @@
   }
 
   async function loadModel() {
+    showLoading(true, `Cargando ${GLB_FILE_NAME}…`);
     errorBox.classList.remove("show");
+    setStatus(`Cargando ${GLB_FILE_NAME}…`);
 
     const loader = new GLTFLoader();
     const dracoLoader = new DRACOLoader();
@@ -455,60 +452,49 @@
       loader.setMeshoptDecoder(MeshoptDecoder);
     }
 
-    let lastError = null;
+    try {
+      const gltf = await new Promise((resolve, reject) => {
+        loader.load(
+          GLB_FILE_URL,
+          resolve,
+          xhr => {
+            if (xhr.lengthComputable && xhr.total > 0) {
+              const percent = Math.round((xhr.loaded / xhr.total) * 100);
+              const loadedMB = (xhr.loaded / (1024 * 1024)).toFixed(1);
+              const totalMB = (xhr.total / (1024 * 1024)).toFixed(1);
+              loadingTextEl.textContent = `Cargando ${GLB_FILE_NAME}… ${percent}% (${loadedMB} MB / ${totalMB} MB)`;
+            } else if (xhr.loaded) {
+              const loadedMB = (xhr.loaded / (1024 * 1024)).toFixed(1);
+              loadingTextEl.textContent = `Cargando ${GLB_FILE_NAME}… (${loadedMB} MB descargados)`;
+            }
+          },
+          reject
+        );
+      });
 
-    for (const candidate of MODEL_CANDIDATES) {
-      showLoading(true, `Cargando ${candidate.name}…`);
-      setStatus(`Cargando ${candidate.name}…`);
-
-      try {
-        const gltf = await new Promise((resolve, reject) => {
-          loader.load(
-            candidate.url,
-            resolve,
-            xhr => {
-              if (xhr.lengthComputable && xhr.total > 0) {
-                const percent = Math.round((xhr.loaded / xhr.total) * 100);
-                const loadedMB = (xhr.loaded / (1024 * 1024)).toFixed(1);
-                const totalMB = (xhr.total / (1024 * 1024)).toFixed(1);
-                loadingTextEl.textContent = `Cargando ${candidate.name}… ${percent}% (${loadedMB} MB / ${totalMB} MB)`;
-              } else if (xhr.loaded) {
-                const loadedMB = (xhr.loaded / (1024 * 1024)).toFixed(1);
-                loadingTextEl.textContent = `Cargando ${candidate.name}… (${loadedMB} MB descargados)`;
-              }
-            },
-            reject
-          );
-        });
-
-        if (!gltf || !gltf.scene) {
-          throw new Error("El archivo no contiene una escena 3D válida.");
-        }
-
-        model = gltf.scene;
-        activeModelName = candidate.name;
-        prepareModel(model, candidate.name);
-        scene.add(model);
-
-        showLoading(false);
-        setStatus(`Modelo cargado: ${candidate.name}`, true);
-        return;
-      } catch (error) {
-        console.warn(`No se pudo cargar ${candidate.name}:`, error);
-        lastError = error;
+      if (!gltf || !gltf.scene) {
+        throw new Error("El archivo no contiene una escena 3D válida.");
       }
+
+      model = gltf.scene;
+      prepareModel(model);
+      scene.add(model);
+
+      showLoading(false);
+      setStatus("Modelo cargado", true);
+    } catch (error) {
+      console.error(`Error cargando ${GLB_FILE_NAME}:`, error);
+      showLoading(false);
+      setStatus("No se pudo cargar el modelo", false, true);
+
+      errorBox.textContent =
+        `No se pudo cargar el archivo ${GLB_FILE_NAME}. ` +
+        `Asegúrate de que el archivo exista junto a index.html y sea un modelo GLTF/GLB válido.`;
+      errorBox.classList.add("show");
     }
-
-    showLoading(false);
-    setStatus("No se pudo cargar ningún modelo", false, true);
-
-    errorBox.textContent =
-      "No se pudo cargar el modelo principal (quito-ecuador(2).glb) ni el de respaldo (edificio.glb). " +
-      "Verifica que los archivos existan y tengan un formato GLTF/GLB válido.";
-    errorBox.classList.add("show");
   }
 
-  function prepareModel(object, fileName) {
+  function prepareModel(object) {
     baseMaterials.clear();
     materials = [];
 
@@ -563,7 +549,7 @@
       object.position.y -= finalBox.min.y;
     }
 
-    updateModelInfo(fileName);
+    updateModelInfo();
     fitCamera();
   }
 
@@ -601,7 +587,7 @@
     fitCamera();
   }
 
-  function updateModelInfo(fileName = activeModelName) {
+  function updateModelInfo() {
     if (!model) return;
 
     let meshCount = 0;
@@ -632,7 +618,7 @@
     });
 
     modelInfoEl.innerHTML =
-      `<strong>Archivo:</strong> ${fileName}<br>` +
+      `<strong>Archivo:</strong> ${GLB_FILE_NAME}<br>` +
       `<strong>Mallas:</strong> ${meshCount.toLocaleString("es")}<br>` +
       `<strong>Vértices:</strong> ${Math.round(vertexCount).toLocaleString("es")}<br>` +
       `<strong>Triángulos:</strong> ${Math.round(triangleCount).toLocaleString("es")}<br>` +
